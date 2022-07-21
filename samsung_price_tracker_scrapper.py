@@ -1,48 +1,52 @@
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
-import sqlite3
+from helpers import db_insert_listing_price
 from time import sleep
 
-listing_name = "Galaxy Tab A8"
-price_page_url = "https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR"
-no_trade_btn = 'tradeinOptionNo'
-price_path = "//div[@class='price-info']//strong"
- 
-driver = Firefox()
-driver.get(price_page_url)
-sleep(3) # Sleep for 3 seconds to let page load
-driver.find_element(By.ID, no_trade_btn).click()
-price_value = driver.find_element_by_xpath(price_path).get_attribute('innerHTML')
-print(price_value)
-if '$' == price_value[0]:
-    price = price_value[1:] 
-price = float(price)
-print(price)
+def main():
+    # parameters
+    listing_name = "Galaxy Tab A8"
+    product_url = "https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR"
+    no_trade_btn_id = 'tradeinOptionNo'
+    scraped_price = scrape_samsung_dot_com_product_price(product_url, no_trade_btn_id)
+    print(scraped_price)
+    print(type(scraped_price))
+    db_insert_listing_price(listing_name, product_url, scraped_price)
 
-# adding info to SQLite DB
-print(f"INSERT OR IGNORE INTO listing(name,url) VALUES('{listing_name}','{price_page_url}')")
-try:
-    connection = sqlite3.connect("price_tracker.db")
-    cursor = connection.cursor()
-    cursor.execute(f"INSERT OR IGNORE INTO listing(\
-                            name,\
-                            url\
-                        ) VALUES(\
-                            '{listing_name}',\
-                            '{price_page_url}'\
-                        )")
-    cursor.execute(f"SELECT id FROM listing WHERE name='{listing_name}'")
-    listing_id = cursor.fetchone()[0]
-    # TODO: Add to log if listing _id is not found
-    print(listing_id)
-    insert_price = f"INSERT INTO price(listing_id,price_in_cents) VALUES ('{listing_id}','{price*100}')"
-    print(insert_price)
-    cursor.execute(insert_price)
-    # TODO: This insert is failing for some reason, must debug
+def scrape_samsung_dot_com_product_price(product_url, *args):
+    """
+        Get a Samsung.com product price given a list of button ids that need to be pressed to get correct price
+        Accepts multiple button ids because for some products you need to press multiple buttons to get correct price
 
-except sqlite3.Error as error:
-    print("Failed to read data from sqlite table", error)
-finally:
-    if connection:
-        connection.close()
-        print("The SQLite connection is closed")
+        product_url: String of full URL for a Samsung.com product
+        *args: optional variable number of button HTML ids that need to be clicked
+    """
+    price_path = "//div[@class='price-info']//strong"
+    try:
+        driver = Firefox()
+        driver.get(product_url)
+    except:
+        print('Failed to load product web page.')
+        exit()
+    sleep(3) # Sleep for 3 seconds to let page load
+    try:
+        if len(args)>0:
+            for btn_id in args:
+                driver.find_element(By.ID, btn_id).click()
+    except:
+        print('Problem clicking specified button ids')
+        exit()
+    try:
+        price_value = driver.find_element_by_xpath(price_path).get_attribute('innerHTML')
+        print(price_value)
+        if '$' == price_value[0]:
+            dollar_price = price_value[1:] 
+        dollar_price = float(dollar_price)
+        print(dollar_price)
+        return dollar_price 
+    except:
+        print('Failed to scrape price')
+        exit()
+
+if __name__ == '__main__':
+    main()
