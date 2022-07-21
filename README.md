@@ -4,7 +4,7 @@
 - The scraped data is saved to a local SQLite database which allows for multiple product listings and their prices to be stored
 - Future Planned Improvements:
     - Visualize Price History
-    - Send an email once a target price is hit
+    - send price notifications email to multiple accounts
     - Add more error-handling and logging
     - Schedule this program to run on Windows Start-up
     - Create more programs based on "samsung_price_tracker_scrapper.py" for other products/websites
@@ -16,6 +16,6 @@
 pip install -r requirements.txt
 ```
 2. This program utilizes Selenium which requires Gecko Driver to function. If you haven't already done this, please download lastest Gecko Driver here https://github.com/mozilla/geckodriver/releases, unzip it, and add its parent folder to your Windows Path Environment Variable and restart your computer.
-3. Run "rice_tracker_db_setup.py" to set up the SQLite database and tables this program stores price information into
+3. Run "price_tracker_db_setup.py" to set up the SQLite database and tables this program stores price information into
 4. Run "samsung_price_tracker_scrapper.py" to scrape your first price
 5. (Recommended) Schedule "samsung_price_tracker_scrapper.py" to run daily

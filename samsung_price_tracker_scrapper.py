@@ -1,17 +1,18 @@
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
-from helpers import db_insert_listing_price
+from helpers import db_insert_listing_price, email_product_info
 from time import sleep
 
 def main():
     # parameters
     listing_name = "Galaxy Tab A8"
     product_url = "https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR"
+    target_price = 185
     no_trade_btn_id = 'tradeinOptionNo'
     scraped_price = scrape_samsung_dot_com_product_price(product_url, no_trade_btn_id)
-    print(scraped_price)
-    print(type(scraped_price))
     db_insert_listing_price(listing_name, product_url, scraped_price)
+    if scraped_price <= target_price:
+        email_product_info(listing_name, product_url, scraped_price, 'fzrocco@gmail.com')
 
 def scrape_samsung_dot_com_product_price(product_url, *args):
     """
@@ -42,7 +43,6 @@ def scrape_samsung_dot_com_product_price(product_url, *args):
         if '$' == price_value[0]:
             dollar_price = price_value[1:] 
         dollar_price = float(dollar_price)
-        print(dollar_price)
         return dollar_price 
     except:
         print('Failed to scrape price')
