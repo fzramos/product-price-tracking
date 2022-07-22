@@ -1,6 +1,6 @@
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
-from utility import db_insert_listing_price, email_product_info
+from utility import getConfig, db_insert_listing_price, email_product_info
 from time import sleep
 import logging
 from os import path
@@ -14,24 +14,26 @@ logging.basicConfig(level=logging.DEBUG, filename=path.join(path.dirname(path.re
 
 
 def main():
-    # parameters
-    listing_name = "Galaxy Tab A8"
-    product_url = "https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR"
-    target_price = 300
-    no_trade_btn_id = 'tradeinOptionNo'
-    scraped_price = scrape_samsung_dot_com_product_price(product_url, no_trade_btn_id)
+    # getting parameters from config.ini
+    config = getConfig()
+    listing_name = config['samsung'].get("listing_name", "Galaxy Tab A8")  
+    product_url = config['samsung'].get("product_url", "https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR")
+    target_price = float(config['samsung'].get("target_price", "185"))
+    button_ids = config['samsung'].get("button_ids", "tradeinOptionNo")
+    emails = config['properties'].get("recipients", "test@email.com").replace(',',';')
+    scraped_price = scrape_samsung_dot_com_product_price(product_url, button_ids)
     db_insert_listing_price(listing_name, product_url, scraped_price)
     if scraped_price <= target_price:
-        email_product_info(listing_name, product_url, scraped_price, 'fzrocco@gmail.com')
+        email_product_info(listing_name, product_url, scraped_price, emails)
 
 
-def scrape_samsung_dot_com_product_price(product_url, *args):
+def scrape_samsung_dot_com_product_price(product_url, btn_ids):
     """
         Get a Samsung.com product price given a list of button ids that need to be pressed to get correct price
         Accepts multiple button ids because for some products you need to press multiple buttons to get correct price
 
         product_url: String of full URL for a Samsung.com product
-        *args: optional variable number of button HTML ids that need to be clicked
+        btn_ids: string containing comma-separated string of button HTML ids that need to be clicked
     """
     logging.debug(f"Starting price scrapping function for URL {product_url}")
     price_path = "//div[@class='price-info']//strong"
@@ -44,12 +46,17 @@ def scrape_samsung_dot_com_product_price(product_url, *args):
         exit()
     sleep(3) # Sleep for 3 seconds to let page load
     try:
-        if len(args)>0:
-            for btn_id in args:
-                driver.find_element(By.ID, btn_id).click()
+        btn_id_list = list()
+        if "," in btn_ids:
+            btn_id_list = btn_ids.split(',')
+        else:
+            btn_id_list.append(btn_ids)
+        for btn_id in btn_id_list:
+            driver.find_element(By.ID, btn_id).click()
     except Exception as ex:
         logging.error('Problem clicking specified button ids')
         logging.exception(f'Exception occured: {ex}')
+        driver.close()
         exit()
     try:
         price_value = driver.find_element_by_xpath(price_path).get_attribute('innerHTML')
@@ -58,10 +65,12 @@ def scrape_samsung_dot_com_product_price(product_url, *args):
             dollar_price = price_value[1:] 
         dollar_price = float(dollar_price)
         logging.debug(f"Scrapped the following product price: {dollar_price}")
+        driver.close()
         return dollar_price 
     except Exception as ex:
         logging.error('Failed to scrape price')
         logging.exception(f'Exception occured: {ex}')
+        driver.close()
         exit()
 
 
