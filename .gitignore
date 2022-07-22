@@ -2,3 +2,5 @@
 *.log
 __pycache__
 app.py
+price_history_visualization.py
+samsung_price_tracker_directories.bat
