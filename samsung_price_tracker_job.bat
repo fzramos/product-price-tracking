@@ -1,0 +1,1 @@
+call "C:\Users\CURRENT-USER\anaconda3\Scripts\activate.bat" base & cd "REPO-PATH\price_tracker" & python samsung_price_tracker_scrapper.py
