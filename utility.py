@@ -1,9 +1,10 @@
 import sqlite3
-import win32com.client as win32
+# import win32com.client as win32
 import logging
 from os import path
-import configparser
-import toml
+from time import sleep
+from selenium.webdriver import Firefox
+from selenium.webdriver.common.by import By
 
 
 for handler in logging.root.handlers[:]:
@@ -12,19 +13,51 @@ logging.basicConfig(level=logging.DEBUG, filename=path.join(path.dirname(path.re
                     format='%(asctime)s module:%(module)s line:%(lineno)d %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
-# Read local `config.toml` file.
 
-def getConfig():
-    logging.debug("Getting configuration variables")
-    configDir = path.dirname(path.realpath(__file__))
+def scrape_product_price(product_url, btn_ids, price_xpath):
+    """
+        Get a product price given a list of button ids that need to be pressed to get correct price
+        Accepts multiple button ids because for some products you need to press multiple buttons to get correct price
+
+        product_url: String of full URL for an online product listing
+        btn_ids: string containing comma-separated string of button HTML ids that need to be clicked
+    """
+    logging.debug(f"Starting price scrapping function for URL {product_url}")
+    # price_path = "//div[@class='price-info']//strong"
     try:
-        config = configparser.ConfigParser()
-        config.read(path.join(configDir, 'config.ini'))
+        driver = Firefox()
+        driver.get(product_url)
     except Exception as ex:
-        logging.error("Can't retrieve config.ini file or its values")
-        logging.exception(f"Exception occured: {ex}")
+        logging.error('Failed to load product web page.')
+        logging.exception(f'Exception occured: {ex}')
         exit()
-    return config
+    sleep(3) # Sleep for 3 seconds to let page load
+    try:
+        if btn_ids:
+            for btn_id in btn_ids:
+                driver.find_element(By.ID, btn_id).click()
+    except Exception as ex:
+        logging.error('Problem clicking specified button ids')
+        logging.exception(f'Exception occured: {ex}')
+        driver.close()
+        exit()
+    try:
+        # price_value = driver.find_element_by_xpath(price_xpath).get_attribute('innerHTML')
+        price_value = driver.find_element("xpath",price_xpath).get_attribute('innerHTML')
+        print(price_value)
+        if '$' == price_value[0]:
+            price_value = price_value[1:]
+        price_value = float(price_value)
+        logging.debug(f"Scrapped the following product price: {price_value}")
+        driver.close()
+        return price_value 
+    except Exception as ex:
+        logging.error('Failed to scrape price')
+        # likely because Xpath wrong, add that in log?
+        logging.exception(f'Exception occured: {ex}')
+        driver.close()
+        exit()
+
 
 
 def db_insert_listing_price(listing_name, listing_url, dollar_price):
@@ -59,23 +92,23 @@ def db_insert_listing_price(listing_name, listing_url, dollar_price):
             logging.debug("The SQLite connection is closed")
     
 
-def email_product_info(product_name, product_url, price, emails):
-    logging.debug("Attempting to send price alert email")
-    try:
-        outlook = win32.Dispatch('outlook.application')
-    except Exception as ex:
-        logging.error('Failed to connect to Outlook Application')
-        logging.exception(f'Exception occured: {ex}')
-        exit()
-    mail = outlook.CreateItem(0)
-    if len(emails) > 0:
-        mail.To = ';'.join(emails)
-    else:
-        logging.error('No recipient emails specified')
-        exit()
-    mail.Subject = f'{product_name} is now ${price}'
-    mail.Body = f'The set target price for the product {product_name} has been reached.\n\
-                The current price is ${price}.\n\
-                Product URL: {product_url}'
-    mail.Send()
-    logging.debug(f"Sent price alert email for product {product_name}")
+# def email_product_info(product_name, product_url, price, emails):
+#     logging.debug("Attempting to send price alert email")
+#     try:
+#         outlook = win32.Dispatch('outlook.application')
+#     except Exception as ex:
+#         logging.error('Failed to connect to Outlook Application')
+#         logging.exception(f'Exception occured: {ex}')
+#         exit()
+#     mail = outlook.CreateItem(0)
+#     if len(emails) > 0:
+#         mail.To = ';'.join(emails)
+#     else:
+#         logging.error('No recipient emails specified')
+#         exit()
+#     mail.Subject = f'{product_name} is now ${price}'
+#     mail.Body = f'The set target price for the product {product_name} has been reached.\n\
+#                 The current price is ${price}.\n\
+#                 Product URL: {product_url}'
+#     mail.Send()
+#     logging.debug(f"Sent price alert email for product {product_name}")
