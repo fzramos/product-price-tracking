@@ -4,7 +4,7 @@ from utility import getConfig, db_insert_listing_price, email_product_info
 from time import sleep
 import logging
 from os import path
-
+import toml
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -15,16 +15,21 @@ logging.basicConfig(level=logging.DEBUG, filename=path.join(path.dirname(path.re
 
 def main():
     # getting parameters from config.ini
-    config = getConfig()
-    listing_name = config['samsung'].get("listing_name", "Galaxy Tab A8")  
-    product_url = config['samsung'].get("product_url", "https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR")
-    target_price = float(config['samsung'].get("target_price", "185"))
-    button_ids = config['samsung'].get("button_ids", "tradeinOptionNo")
-    emails = config['properties'].get("recipients", "test@email.com").replace(',',';')
-    scraped_price = scrape_samsung_dot_com_product_price(product_url, button_ids)
-    db_insert_listing_price(listing_name, product_url, scraped_price)
-    if scraped_price <= target_price:
-        email_product_info(listing_name, product_url, scraped_price, emails)
+    # config = getConfig()
+    toml_path = path.join(path.dirname(path.realpath(__file__)),"config.toml")
+    config = toml.load(toml_path)
+    listings = config['samsung_product']
+    # failed becuased misconfiged file
+    for listing in listings:
+        # .get("listing_name", "Galaxy Tab A8")  
+        # product_url = config['samsung'].get("product_url", "https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR")
+        # target_price = float(config['samsung'].get("target_price", "185"))
+        # button_ids = config['samsung'].get("button_ids", "tradeinOptionNo")
+        # emails = config['properties'].get("recipients", "test@email.com").replace(',',';')
+        scraped_price = scrape_samsung_dot_com_product_price(listing["product_url"], listing["button_ids"])
+        db_insert_listing_price(listing["listing_name"], listing["product_url"], scraped_price)
+        if scraped_price <= listing["target_price"]:
+            email_product_info(listing["listing_name"], listing["product_url"], scraped_price, listing["emails"])
 
 
 def scrape_samsung_dot_com_product_price(product_url, btn_ids):
@@ -46,13 +51,14 @@ def scrape_samsung_dot_com_product_price(product_url, btn_ids):
         exit()
     sleep(3) # Sleep for 3 seconds to let page load
     try:
-        btn_id_list = list()
-        if "," in btn_ids:
-            btn_id_list = btn_ids.split(',')
-        else:
-            btn_id_list.append(btn_ids)
-        for btn_id in btn_id_list:
-            driver.find_element(By.ID, btn_id).click()
+        # btn_id_list = list()
+        # if "," in btn_ids:
+        #     btn_id_list = btn_ids.split(',')
+        # else:
+        #     btn_id_list.append(btn_ids)
+        if btn_ids:
+            for btn_id in btn_ids:
+                driver.find_element(By.ID, btn_id).click()
     except Exception as ex:
         logging.error('Problem clicking specified button ids')
         logging.exception(f'Exception occured: {ex}')

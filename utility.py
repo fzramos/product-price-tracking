@@ -3,6 +3,7 @@ import win32com.client as win32
 import logging
 from os import path
 import configparser
+import toml
 
 
 for handler in logging.root.handlers[:]:
@@ -11,6 +12,7 @@ logging.basicConfig(level=logging.DEBUG, filename=path.join(path.dirname(path.re
                     format='%(asctime)s module:%(module)s line:%(lineno)d %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
+# Read local `config.toml` file.
 
 def getConfig():
     logging.debug("Getting configuration variables")
@@ -57,7 +59,7 @@ def db_insert_listing_price(listing_name, listing_url, dollar_price):
             logging.debug("The SQLite connection is closed")
     
 
-def email_product_info(product_name, product_url, price, *args):
+def email_product_info(product_name, product_url, price, emails):
     logging.debug("Attempting to send price alert email")
     try:
         outlook = win32.Dispatch('outlook.application')
@@ -66,8 +68,8 @@ def email_product_info(product_name, product_url, price, *args):
         logging.exception(f'Exception occured: {ex}')
         exit()
     mail = outlook.CreateItem(0)
-    if len(args) > 0:
-        mail.To = ';'.join(args)
+    if len(emails) > 0:
+        mail.To = ';'.join(emails)
     else:
         logging.error('No recipient emails specified')
         exit()

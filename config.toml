@@ -1,0 +1,18 @@
+[properties]
+recipients=["test1@gmail.com","test2@outlook.com"]
+# comma separated list of emails to receive price alerts
+
+# Array of Tables
+[[samsung_product]]
+listing_name="Galaxy Tab A8"
+product_url="https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR"
+button_ids=["tradeinOptionNo"]
+# comma separated list of button ids
+target_price=185
+# price limit under which alert emails are sent
+
+[[samsung_product]]
+listing_name="EVO Plus + Adapter microSDXC 128GB"
+product_url="https://www.samsung.com/us/computing/memory-storage/memory-cards/evo-plus---adapter-microsdxc-128gb-mb-mc128ka-am/"
+button_ids=[]
+target_price=15
