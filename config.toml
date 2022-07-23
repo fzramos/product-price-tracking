@@ -2,7 +2,7 @@
 recipients=["test1@gmail.com","test2@outlook.com"]
 # list of emails to receive price alerts
 
-# Array of Tables
+# Each prod
 [[product_info]]
 listing_name="Galaxy Tab A8"
 product_url="https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR"

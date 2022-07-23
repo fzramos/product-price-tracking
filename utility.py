@@ -1,5 +1,5 @@
 import sqlite3
-# import win32com.client as win32
+import win32com.client as win32
 import logging
 from os import path
 from time import sleep
@@ -92,23 +92,23 @@ def db_insert_listing_price(listing_name, listing_url, dollar_price):
             logging.debug("The SQLite connection is closed")
     
 
-# def email_product_info(product_name, product_url, price, emails):
-#     logging.debug("Attempting to send price alert email")
-#     try:
-#         outlook = win32.Dispatch('outlook.application')
-#     except Exception as ex:
-#         logging.error('Failed to connect to Outlook Application')
-#         logging.exception(f'Exception occured: {ex}')
-#         exit()
-#     mail = outlook.CreateItem(0)
-#     if len(emails) > 0:
-#         mail.To = ';'.join(emails)
-#     else:
-#         logging.error('No recipient emails specified')
-#         exit()
-#     mail.Subject = f'{product_name} is now ${price}'
-#     mail.Body = f'The set target price for the product {product_name} has been reached.\n\
-#                 The current price is ${price}.\n\
-#                 Product URL: {product_url}'
-#     mail.Send()
-#     logging.debug(f"Sent price alert email for product {product_name}")
+def email_product_info(product_name, product_url, price, emails):
+    logging.debug("Attempting to send price alert email")
+    try:
+        outlook = win32.Dispatch('outlook.application')
+    except Exception as ex:
+        logging.error('Failed to connect to Outlook Application')
+        logging.exception(f'Exception occured: {ex}')
+        exit()
+    mail = outlook.CreateItem(0)
+    if len(emails) > 0:
+        mail.To = ';'.join(emails)
+    else:
+        logging.error('No recipient emails specified')
+        exit()
+    mail.Subject = f'{product_name} is now ${price}'
+    mail.Body = f'The set target price for the product {product_name} has been reached.\n\
+                The current price is ${price}.\n\
+                Product URL: {product_url}'
+    mail.Send()
+    logging.debug(f"Sent price alert email for product {product_name}")

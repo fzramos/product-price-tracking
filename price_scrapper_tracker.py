@@ -1,5 +1,4 @@
-# from utility import db_insert_listing_price, scrape_product_price, email_product_info
-from utility import db_insert_listing_price, scrape_product_price
+from utility import db_insert_listing_price, scrape_product_price, email_product_info
 import logging
 from os import path
 import toml
@@ -20,8 +19,8 @@ def main():
     for listing in listings:
         scraped_price = scrape_product_price(listing["product_url"], listing["button_ids"], listing["price_xpath"])
         db_insert_listing_price(listing["listing_name"], listing["product_url"], scraped_price)
-        # if scraped_price <= listing["target_price"]:
-        #     email_product_info(listing["listing_name"], listing["product_url"], scraped_price, listing["emails"])
+        if scraped_price <= listing["target_price"]:
+            email_product_info(listing["listing_name"], listing["product_url"], scraped_price, listing["emails"])
 
 
 if __name__ == '__main__':
