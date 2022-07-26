@@ -1,0 +1,17 @@
+html {
+    background-color : #2a2a2e;
+}
+body {
+    margin : 10px 50px 25px;
+}
+a {
+    font-size: 30px;
+    margin-bottom: 40px;
+}
+.product-link {
+    padding-bottom: 10px;
+    margin-bottom: 40px;
+}
+P {
+    font-size: 35px;
+}

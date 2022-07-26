@@ -2,9 +2,9 @@
 *.log
 __pycache__
 app.py
-price_history_visualization.py
 samsung_price_tracker_job_directories.bat
 sqlite3_cmds.txt
 .env
 linux_price_scrapper_job.sh
 price_tracker
+viz_example.py
