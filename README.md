@@ -6,6 +6,7 @@
 - Optionally, users can set a target price for their product and if the scraped price is at or below the target, an alert email will be sent to the emails specified in the config.toml file (see instructions below)
 - This repository includes a batch file that can be used with Windows Task Scheduler which facilitates automated daily price tracking
 - A price alert email is only sent if the user sets up a secure .env file with your gmail credentials
+- Users can visualize all of their tracked product's price histories with an interactive web dashboard (via Plotly Dash).
 
 ## Requirements
 - The lastest Gecko Driver here https://github.com/mozilla/geckodriver/releases
@@ -21,6 +22,7 @@ pip install -r requirements.txt
 3. Modify the values in the "config.toml" file to track the products you are interested in
 4. Run "price_tracker_db_setup.py" to set up the SQLite database and tables this program stores price information into
 5. Run "price_scrapper_tracker.py" to scrape your first price
+6. (OPTIONAL) If you want to visualize the price history of your tracked products, simply run the program "price_history_visualization.py" and go to the URL "http://127.0.0.1:8050/" in any browser.
 
 ## OPTIONAL Set-up: Receive price alert emails if your product is under a specified price
 1. In config.toml, add a value to the "target_price" parameter in each "product-info" heading, and a list of "recipients" to the "alert_info" heading.
