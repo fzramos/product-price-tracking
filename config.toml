@@ -1,4 +1,4 @@
-[properties]
+[alert_info]
 recipients=["test1@gmail.com","test2@outlook.com"]
 # list of emails to receive price alerts
 
@@ -8,7 +8,7 @@ listing_name="Galaxy Tab A8"
 product_url="https://www.samsung.com/us/mobile/tablets/buy/?modelCode=SM-X200NIDAXAR"
 button_ids=["tradeinOptionNo"]
 # comma separated list of button ids
-target_price=185
+target_price=300
 # price limit under which alert emails are sent
 price_xpath = "//div[@class='price-info']//strong"
 

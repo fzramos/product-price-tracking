@@ -1,15 +1,19 @@
 import sqlite3
-import win32com.client as win32
 import logging
-from os import path
 from time import sleep
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
+import os
+import smtplib
+from email.message import EmailMessage
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+_ = load_dotenv()
 
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
-logging.basicConfig(level=logging.DEBUG, filename=path.join(path.dirname(path.realpath(__file__)),"app.log"),
+logging.basicConfig(level=logging.DEBUG, filename=os.path.join(os.path.dirname(os.path.realpath(__file__)),"app.log"),
                     format='%(asctime)s module:%(module)s line:%(lineno)d %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -44,9 +48,14 @@ def scrape_product_price(product_url, btn_ids, price_xpath):
     try:
         # price_value = driver.find_element_by_xpath(price_xpath).get_attribute('innerHTML')
         price_value = driver.find_element("xpath",price_xpath).get_attribute('innerHTML')
-        print(price_value)
+        if price_value is None:
+            logging.error(f'Failed to scrape price using the given xpath: {price_xpath}\n from URL: {product_url}')
+            exit()
+        # parsing HTML so we only get the price value, ie 19.99<strike>50.00</strike>
+        price_value = BeautifulSoup(price_value,features="html.parser").find(text=True, recursive=False)
         if '$' == price_value[0]:
             price_value = price_value[1:]
+        print(price_value)
         price_value = float(price_value)
         logging.debug(f"Scrapped the following product price: {price_value}")
         driver.close()
@@ -57,7 +66,6 @@ def scrape_product_price(product_url, btn_ids, price_xpath):
         logging.exception(f'Exception occured: {ex}')
         driver.close()
         exit()
-
 
 
 def db_insert_listing_price(listing_name, listing_url, dollar_price):
@@ -90,25 +98,35 @@ def db_insert_listing_price(listing_name, listing_url, dollar_price):
         if connection:
             connection.close()
             logging.debug("The SQLite connection is closed")
-    
 
-def email_product_info(product_name, product_url, price, emails):
-    logging.debug("Attempting to send price alert email")
+
+def send_email(to, subject, message):
+    email_address = os.environ.get("EMAIL_ADDRESS")
+    email_password = os.environ.get("EMAIL_APP_PASSWORD")
+
+    # create email
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = email_address
+    msg['To'] = ', '.join(to)
+    msg.set_content(message)
+
+    #send email
+    # for outlook: smtplib.SMTP(host="smtp-mail.outlook.com", port=587)
     try:
-        outlook = win32.Dispatch('outlook.application')
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(email_address, email_password)
+            smtp.send_message(msg)
     except Exception as ex:
-        logging.error('Failed to connect to Outlook Application')
-        logging.exception(f'Exception occured: {ex}')
+        logging.error("Failed to send email. Please confirm values in .env are correct.")
+        logging.exception(ex)
         exit()
-    mail = outlook.CreateItem(0)
-    if len(emails) > 0:
-        mail.To = ';'.join(emails)
-    else:
-        logging.error('No recipient emails specified')
-        exit()
-    mail.Subject = f'{product_name} is now ${price}'
-    mail.Body = f'The set target price for the product {product_name} has been reached.\n\
+
+
+def price_alert_email(product_name, product_url, price, emails):
+    subject = f'{product_name} is now ${price}'
+    body = f'The set target price for the product {product_name} has been reached.\n\
                 The current price is ${price}.\n\
                 Product URL: {product_url}'
-    mail.Send()
+    send_email(emails, subject, body)
     logging.debug(f"Sent price alert email for product {product_name}")
